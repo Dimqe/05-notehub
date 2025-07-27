@@ -1,6 +1,4 @@
 import ReactPaginate from 'react-paginate';
-// import { useQuery } from '@tanstack/react-query';
-// import { fetchNotes } from '../../services/noteService';
 import css from './Pagination.module.css';
 
 interface PaginationProps {

@@ -1,46 +1,45 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchNotes, deleteNote } from '../../services/noteService';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { deleteNote } from '../../services/noteService';
 import type { Note } from '../../types/note';
+
 import css from './NoteList.module.css';
 
+
 interface NoteListProps {
-  page: number;
-  search: string;
+  notes: Note[];
 }
 
-const NoteList = ({ page, search }: NoteListProps) => {
+const NoteList = ({ notes }: NoteListProps) => {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['notes', page, search],
-    queryFn: () => fetchNotes({ page, perPage: 12, search }),
+  const { mutate, isPending } = useMutation({
+    mutationFn: deleteNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
   });
 
-  console.log('API response:', data); 
-
-  const handleDelete = async (id: string) => {
-    await deleteNote(id);
-    queryClient.invalidateQueries({ queryKey: ['notes'] });
+  const handleDelete = (id: string) => {
+    mutate(id);
   };
-
-  if (isLoading) return <p>Loading...</p>;
-  if (isError) return <p>Error loading notes.</p>;
-
-const notes: Note[] = Array.isArray(data?.notes) ? data.notes : [];
 
   return (
     <ul className={css.list}>
       {notes.length === 0 ? (
         <li>No notes found.</li>
       ) : (
-        notes.map((note: Note) => (
+        notes.map((note) => (
           <li className={css.listItem} key={note.id}>
             <h2 className={css.title}>{note.title}</h2>
             <p className={css.content}>{note.content}</p>
             <div className={css.footer}>
               <span className={css.tag}>{note.tag}</span>
-              <button className={css.button} onClick={() => handleDelete(note.id)}>
-                Delete
+              <button
+                className={css.button}
+                onClick={() => handleDelete(String(note.id))}
+                disabled={isPending}
+              >
+                {isPending ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </li>
