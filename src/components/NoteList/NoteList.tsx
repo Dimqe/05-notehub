@@ -16,7 +16,7 @@ const NoteList = ({ page, search }: NoteListProps) => {
     queryFn: () => fetchNotes({ page, perPage: 12, search }),
   });
 
-  console.log('API response:', data); // Додайте це для дебагу
+  console.log('API response:', data); 
 
   const handleDelete = async (id: string) => {
     await deleteNote(id);
@@ -26,7 +26,6 @@ const NoteList = ({ page, search }: NoteListProps) => {
   if (isLoading) return <p>Loading...</p>;
   if (isError) return <p>Error loading notes.</p>;
 
-  // Перевірка, що data і data.data існують
 const notes: Note[] = Array.isArray(data?.notes) ? data.notes : [];
 
   return (
