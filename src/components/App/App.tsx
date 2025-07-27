@@ -17,53 +17,57 @@ const App = () => {
 
   const debouncedSearch = useDebouncedValue(search, 500);
 
-  
-const {
-  data,
-  isLoading,
-  isError,
-} = useQuery({
-  queryKey: ['notes', debouncedSearch, page],
-  queryFn: () => fetchNotes({ search: debouncedSearch, page }),
-  initialData: { notes: [], totalPages: 1 }, 
-});
-
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: ['notes', debouncedSearch, page],
+    queryFn: () => fetchNotes({ search: debouncedSearch, page }),
+    placeholderData: (previousData) => previousData,
+  });
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(1); 
+    setPage(1);
   };
+
+
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
         <SearchBox value={search} onChange={handleSearchChange} />
 
-        <Pagination
-          page={page}
-          onPageChange={setPage}
-          totalPages={data?.totalPages || 1}
-        />
-
+{!isLoading && !isError && data?.totalPages !== undefined && data.totalPages > 1 && (
+  <Pagination
+    page={page}
+    onPageChange={setPage}
+    totalPages={data.totalPages}
+  />
+)}
         <button className={css.button} onClick={() => setIsModalOpen(true)}>
-          Create note +
+          Створити нотатку +
         </button>
       </header>
 
-      {isLoading ? (
-        <p>Loading notes...</p>
-      ) : isError ? (
-        <p>Failed to load notes.</p>
-      ) : (
-        <NoteList notes={data.notes} />
-      )}
-
+      
+ {isLoading || isFetching ? (
+  <p>Завантаження нотаток...</p>
+) : isError ? (
+  <p>Не вдалося завантажити нотатки.</p>
+) : !data ? null : data.notes.length > 0 ? (
+  <NoteList notes={data.notes} />
+) : (
+  <p>Нотаток не знайдено.</p>
+)}
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
           <NoteForm onClose={() => setIsModalOpen(false)} />
         </Modal>
       )}
-    </div>
+    </div> 
   );
 };
 
