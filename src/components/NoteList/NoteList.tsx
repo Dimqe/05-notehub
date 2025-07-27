@@ -1,54 +1,54 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import css from './NoteList.module.css';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchNotes, deleteNote } from '../../services/noteService';
-
-
-
+import type { Note } from '../../types/note';
+import css from './NoteList.module.css';
 
 interface NoteListProps {
   page: number;
   search: string;
-  perPage: number;
 }
 
-export default function NoteList({ page, search, perPage }: NoteListProps) {
+const NoteList = ({ page, search }: NoteListProps) => {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['notes', page, perPage, search],
-    queryFn: () => fetchNotes({ page, search, perPage }),
+    queryKey: ['notes', page, search],
+    queryFn: () => fetchNotes({ page, perPage: 12, search }),
   });
 
+  console.log('API response:', data); // Додайте це для дебагу
 
-  const mutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-  });
+  const handleDelete = async (id: string) => {
+    await deleteNote(id);
+    queryClient.invalidateQueries({ queryKey: ['notes'] });
+  };
 
-if (isLoading) return <p>Loading...</p>;
-if (isError || !data || !Array.isArray(data.results)) return <p>Error loading notes.</p>;
-if (data.results.length === 0) return <p>No notes found.</p>;
+  if (isLoading) return <p>Loading...</p>;
+  if (isError) return <p>Error loading notes.</p>;
 
-return (
-  <ul className={css.list}>
-    {data.results.map(note => (
-      <li className={css.listItem} key={note._id.toString()}>
-        <h2 className={css.title}>{note.title}</h2>
-        <p className={css.content}>{note.content}</p>
-        <div className={css.footer}>
-          <span className={css.tag}>{note.tag}</span>
-          <button
-            className={css.button}
-            onClick={() => mutation.mutate(note._id.toString())}
-          >
-            Delete
-          </button>
-        </div>
-      </li>
-    ))}
-  </ul>
-);
+  // Перевірка, що data і data.data існують
+const notes: Note[] = Array.isArray(data?.notes) ? data.notes : [];
 
-}
+  return (
+    <ul className={css.list}>
+      {notes.length === 0 ? (
+        <li>No notes found.</li>
+      ) : (
+        notes.map((note: Note) => (
+          <li className={css.listItem} key={note.id}>
+            <h2 className={css.title}>{note.title}</h2>
+            <p className={css.content}>{note.content}</p>
+            <div className={css.footer}>
+              <span className={css.tag}>{note.tag}</span>
+              <button className={css.button} onClick={() => handleDelete(note.id)}>
+                Delete
+              </button>
+            </div>
+          </li>
+        ))
+      )}
+    </ul>
+  );
+};
+
+export default NoteList;

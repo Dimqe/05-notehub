@@ -1,8 +1,11 @@
 import axios from 'axios';
+import type { AxiosResponse } from 'axios';
 import type { Note } from '../types/note';
 
 const BASE_URL = 'https://notehub-public.goit.study/api';
 const token = import.meta.env.VITE_NOTEHUB_TOKEN;
+
+
 
 const instance = axios.create({
   baseURL: BASE_URL,
@@ -12,75 +15,33 @@ const instance = axios.create({
 });
 
 export interface FetchNotesParams {
-  page: number;
-  perPage: number;
-  search: string;
+  page?: number;
+  perPage?: number;
+  search?: string;
 }
 
 export interface FetchNotesResponse {
-  results: Note[]; 
+  data: Note[];
   total: number;
   page: number;
   perPage: number;
 }
 
-
-export const fetchNotes = async ({
-  page,
-  perPage,
-  search,
-}: FetchNotesParams): Promise<FetchNotesResponse> => {
-  try {
-    const params: Record<string, string | number> = { page, perPage };
-    const cleanedSearch = search.trim();
-
-    if (cleanedSearch && cleanedSearch !== ':' && cleanedSearch !== 'undefined') {
-      params.search = cleanedSearch;
-    }
-
-    const { data } = await instance.get('/notes', { params });
-    return data;
-  } catch (error) {
-    console.error('Failed to fetch notes:', error);
-    throw error;
-  }
+export const fetchNotes = async ({ page, perPage, search }: FetchNotesParams) => {
+  const params: FetchNotesParams = {};
+  if (page !== undefined) params.page = page;
+  if (perPage !== undefined) params.perPage = perPage;
+  if (search && search.trim() !== '') params.search = search;
+  const response = await instance.get('/notes', { params });
+  return response.data;
 };
 
-// export const fetchNotes = async ({
-//   page,
-//   perPage,
-//   search,
-// }: FetchNotesParams): Promise<FetchNotesResponse> => {
-//   const params: Record<string, string | number> = {
-//     page,
-//     perPage,
-//   };
-
-//   const cleanedSearch = search.trim();
-
-//   // Уникаємо порожніх і некоректних значень
-//   if (cleanedSearch && cleanedSearch !== ':' && cleanedSearch !== 'undefined') {
-//     params.search = cleanedSearch;
-//   }
-
-//   const { data } = await instance.get('/notes', { params });
-//   return data;
-// };
-
-
-
-export const createNote = async (note: {
-  title: string;
-  content: string;
-  tag: Note['tag'];
-}): Promise<Note> => {
-  const { data } = await instance.post('/notes', note);
+export const createNote = async (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Promise<Note> => {
+  const { data }: AxiosResponse<Note> = await instance.post('/notes', noteData);
   return data;
 };
 
-
-
 export const deleteNote = async (id: string): Promise<Note> => {
-  const { data } = await instance.delete(`/notes/${id}`);
+  const { data }: AxiosResponse<Note> = await instance.delete(`/notes/${id}`);
   return data;
 };
